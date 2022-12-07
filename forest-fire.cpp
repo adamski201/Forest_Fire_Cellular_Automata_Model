@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <omp.h>
 #include <numeric>
+#include <algorithm>
 
 /* 
 - 0: no tree
@@ -22,7 +23,7 @@ struct Results
 
 // define arguments of the forest fire function
 Results forest_fire(int N, double p);
-float forest_fire_average(int arraySize, double p, int numberOfRuns);
+std::vector<std::vector<double>> forest_fire_average(int arraySize, int numberOfRuns);
 
 int main(int argc, char **argv)
 {
@@ -43,11 +44,19 @@ int main(int argc, char **argv)
     srand(seed); 
 
     // call the forest fire function
-    int nsteps = forest_fire(N, p).stepCount;
+    //int nsteps = forest_fire(N, p).stepCount;
 
-    float avgSteps = forest_fire_average(100, 0.6, 100);
+    std::vector<std::vector<double>> resultHundred = forest_fire_average(100, 100);
 
-    std::cout << "Average steps: " << avgSteps;
+    for (int i = 0; i < 21; i++)
+    {
+        for (int j = 0; j < resultHundred[i].size(); j++)
+        {
+            std::cout << resultHundred[i][j] << " ";
+        }
+
+        std::cout << std::endl;
+    }
         
     return 0;
 }
@@ -190,22 +199,42 @@ Results forest_fire(int N, double p){
     return result;
 }
 
-
-// Function that calculates the average number of steps for a certain array size and probability after N runs
-float forest_fire_average(int arraySize, double p, int numberOfRuns)
+// Function that calculates the average number of steps for a certain array size, over a range of probabilities
+// Output vector has 21 rows and columns represent [Probability, Average, Min Value, Max Value]
+std::vector<std::vector<double>> forest_fire_average(int arraySize, int numberOfRuns)
 {
-    std::vector<int> stepsResults;
+    std::vector<std::vector<double>> stepsResults;
 
-    int i = 0;
-    while (i < numberOfRuns)
+    double p = 0;
+
+    // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
+    for (int i = 0; i < 21; ++i)
     {
-        stepsResults.push_back(forest_fire(arraySize, p).stepCount);
-        i++;
+        // Adds the probability value to the first column of the row.
+        stepsResults.push_back(std::vector<double>());
+        stepsResults[i].push_back(p);
+
+        // Runs the forest fire model 'numberOfRuns' times with a defined array size
+        // and stores the results.
+        std::vector<double> runSteps;
+        for (int a = 0; a < numberOfRuns; ++a)
+        {
+            runSteps.push_back(forest_fire(arraySize, p).stepCount);
+        }
+
+        // Calculates and stores the average of the results.
+        double averageSteps = std::reduce(runSteps.begin(), runSteps.end()) / runSteps.size();
+        stepsResults[i].push_back(averageSteps);
+        stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
+        stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
+
+        // Increments probability.
+        p += 0.05;
     }
 
-    int count = stepsResults.size();
-    return std::reduce(stepsResults.begin(), stepsResults.end()) / count;
+    return stepsResults;
 }
+
 
 
 
