@@ -23,7 +23,7 @@ struct Results
 
 // define arguments of the forest fire function
 Results forest_fire(int N, double p);
-std::vector<std::vector<double>> forest_fire_average(int arraySize, int numberOfRuns);
+std::vector<std::vector<std::vector<double>>> forest_fire_average(int lowerArraySize, int upperArraySize, int numberOfRuns);
 
 int main(int argc, char **argv)
 {
@@ -46,18 +46,23 @@ int main(int argc, char **argv)
     // call the forest fire function
     //int nsteps = forest_fire(N, p).stepCount;
 
-    std::vector<std::vector<double>> resultHundred = forest_fire_average(100, 100);
+    std::vector<std::vector<std::vector<double>>> result = forest_fire_average(10, 110, 100);
 
-    for (int i = 0; i < 21; i++)
+    for (int i = 0; i < 2; ++i)
     {
-        for (int j = 0; j < resultHundred[i].size(); j++)
+        for (int j = 0; j < 21; j++)
         {
-            std::cout << resultHundred[i][j] << " ";
+            for (int k = 0; k < result[i][j].size(); k++)
+            {
+                std::cout << result[i][j][k] << " ";
+            }
+
+            std::cout << std::endl;
         }
 
-        std::cout << std::endl;
+        std::cout << std::endl << std::endl;
     }
-        
+    
     return 0;
 }
   
@@ -201,38 +206,45 @@ Results forest_fire(int N, double p){
 
 // Function that calculates the average number of steps for a certain array size, over a range of probabilities
 // Output vector has 21 rows and columns represent [Probability, Average, Min Value, Max Value]
-std::vector<std::vector<double>> forest_fire_average(int arraySize, int numberOfRuns)
+std::vector<std::vector<std::vector<double>>> forest_fire_average(int lowerArraySize, int upperArraySize, int numberOfRuns)
 {
-    std::vector<std::vector<double>> stepsResults;
+    std::vector<std::vector<std::vector<double>>> results_vary_N_and_p;
 
-    double p = 0;
-
-    // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
-    for (int i = 0; i < 21; ++i)
+    for (int arraySize = lowerArraySize; arraySize <= upperArraySize; arraySize += 100)
     {
-        // Adds the probability value to the first column of the row.
-        stepsResults.push_back(std::vector<double>());
-        stepsResults[i].push_back(p);
+        std::vector<std::vector<double>> stepsResults;
 
-        // Runs the forest fire model 'numberOfRuns' times with a defined array size
-        // and stores the results.
-        std::vector<double> runSteps;
-        for (int a = 0; a < numberOfRuns; ++a)
+        double p = 0;
+
+        // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
+        for (int i = 0; i < 21; ++i)
         {
-            runSteps.push_back(forest_fire(arraySize, p).stepCount);
+            // Adds the probability value to the first column of the row.
+            stepsResults.push_back(std::vector<double>());
+            stepsResults[i].push_back(p);
+
+            // Runs the forest fire model 'numberOfRuns' times with a defined array size
+            // and stores the results.
+            std::vector<double> runSteps;
+            for (int a = 0; a < numberOfRuns; ++a)
+            {
+                runSteps.push_back(forest_fire(arraySize, p).stepCount);
+            }
+
+            // Calculates and stores the average of the results.
+            double averageSteps = std::reduce(runSteps.begin(), runSteps.end()) / runSteps.size();
+            stepsResults[i].push_back(averageSteps);
+            stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
+            stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
+
+            // Increments probability.
+            p += 0.05;
         }
 
-        // Calculates and stores the average of the results.
-        double averageSteps = std::reduce(runSteps.begin(), runSteps.end()) / runSteps.size();
-        stepsResults[i].push_back(averageSteps);
-        stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
-        stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
-
-        // Increments probability.
-        p += 0.05;
+        results_vary_N_and_p.push_back(stepsResults);
     }
 
-    return stepsResults;
+    return results_vary_N_and_p;
 }
 
 
