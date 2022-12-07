@@ -23,7 +23,7 @@ struct Results
 
 // define arguments of the forest fire function
 Results forest_fire(int N, double p);
-std::vector<std::vector<std::vector<double>>> forest_fire_average(int lowerArraySize, int upperArraySize, int numberOfRuns);
+std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowerArraySize, int upperArraySize, int numberOfRuns);
 
 int main(int argc, char **argv)
 {
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     // call the forest fire function
     //int nsteps = forest_fire(N, p).stepCount;
 
-    std::vector<std::vector<std::vector<double>>> result = forest_fire_average(10, 110, 100);
+    std::vector<std::vector<std::vector<double>>> result = forest_fire_average_steps(10, 110, 100);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -204,16 +204,19 @@ Results forest_fire(int N, double p){
     return result;
 }
 
-// Function that calculates the average number of steps for a certain array size, over a range of probabilities
+// Function that calculates the average number of steps, incrementing over arraysize and probability
 // Output vector has 21 rows and columns represent [Probability, Average, Min Value, Max Value]
-std::vector<std::vector<std::vector<double>>> forest_fire_average(int lowerArraySize, int upperArraySize, int numberOfRuns)
+std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowerArraySize, int upperArraySize, int numberOfRuns)
 {
+    // Create empty vector to store results
     std::vector<std::vector<std::vector<double>>> results_vary_N_and_p;
 
+    // Increment over arraysize
     for (int arraySize = lowerArraySize; arraySize <= upperArraySize; arraySize += 100)
     {
         std::vector<std::vector<double>> stepsResults;
 
+        // init probability
         double p = 0;
 
         // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
