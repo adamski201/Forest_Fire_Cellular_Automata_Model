@@ -1,0 +1,35 @@
+Abort(805362447) on node 0 (rank 0 in comm 0): Fatal error in PMPI_Init: Other MPI error, error stack:
+PMPI_Init(110): Cannot call MPI_INIT or MPI_INIT_THREAD more than once
+[cli_0]: write_line error; fd=11 buf=:cmd=abort exitcode=805362447
+:
+system msg for write_line failure : Bad file descriptor
+Attempting to use an MPI routine after finalizing MPICH
+Abort(805362447) on node 4 (rank 4 in comm 0): Fatal error in PMPI_Init: Other MPI error, error stack:
+PMPI_Init(110): Cannot call MPI_INIT or MPI_INIT_THREAD more than once
+[cli_4]: write_line error; fd=11 buf=:cmd=abort exitcode=805362447
+:
+system msg for write_line failure : Bad file descriptor
+Attempting to use an MPI routine after finalizing MPICH
+Abort(805362447) on node 3 (rank 3 in comm 0): Fatal error in PMPI_Init: Other MPI error, error stack:
+PMPI_Init(110): Cannot call MPI_INIT or MPI_INIT_THREAD more than once
+[cli_3]: write_line error; fd=11 buf=:cmd=abort exitcode=805362447
+:
+system msg for write_line failure : Bad file descriptor
+Attempting to use an MPI routine after finalizing MPICH
+Abort(805362447) on node 1 (rank 1 in comm 0): Fatal error in PMPI_Init: Other MPI error, error stack:
+PMPI_Init(110): Cannot call MPI_INIT or MPI_INIT_THREAD more than once
+[cli_1]: write_line error; fd=11 buf=:cmd=abort exitcode=805362447
+:
+system msg for write_line failure : Bad file descriptor
+Attempting to use an MPI routine after finalizing MPICH
+Abort(805362447) on node 2 (rank 2 in comm 0): Fatal error in PMPI_Init: Other MPI error, error stack:
+PMPI_Init(110): Cannot call MPI_INIT or MPI_INIT_THREAD more than once
+[cli_2]: write_line error; fd=11 buf=:cmd=abort exitcode=805362447
+:
+system msg for write_line failure : Bad file descriptor
+Attempting to use an MPI routine after finalizing MPICH
+srun: error: compute521: task 0: Exited with exit code 1
+srun: error: compute525: task 4: Exited with exit code 1
+srun: error: compute523: task 2: Exited with exit code 1
+srun: error: compute524: task 3: Exited with exit code 1
+srun: error: compute522: task 1: Exited with exit code 1
