@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     // call the forest fire function
     //int nsteps = forest_fire(N, p).stepCount;
 
-    std::vector<std::vector<std::vector<double>>> result = forest_fire_average_steps(10, 110, N);
+    std::vector<std::vector<std::vector<double>>> result = forest_fire_average_steps(10, 10240, N);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -218,7 +218,7 @@ std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowe
     std::vector<std::vector<std::vector<double>>> results_vary_N_and_p;
 
     // Increment over arraysize
-    for (int arraySize = lowerArraySize; arraySize <= upperArraySize; arraySize += 100)
+    for (int arraySize = lowerArraySize; arraySize <= upperArraySize; arraySize *= 2)
     {
         std::vector<std::vector<double>> stepsResults;
 
