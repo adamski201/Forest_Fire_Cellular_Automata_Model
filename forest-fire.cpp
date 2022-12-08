@@ -234,8 +234,15 @@ std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowe
                 runSteps.push_back(forest_fire(arraySize, p).stepCount);
             }
 
+            // Sums the runSteps vector
+            int sum = 0;
+            for (auto& n : runSteps)
+            {
+                sum += n;
+            }
+
             // Calculates and stores the average of the results.
-            double averageSteps = std::reduce(runSteps.begin(), runSteps.end()) / runSteps.size();
+            double averageSteps = sum / runSteps.size();
             stepsResults[i].push_back(averageSteps);
             stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
             stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
