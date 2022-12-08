@@ -2,10 +2,9 @@
 
 #SBATCH --job-name=forest_fire
 #SBATCH --partition=teach_cpu
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=28
-#SBATCH --cpus-per-task=1
-#SBATCH --time=0:0:10
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=100M
 
 ## Direct output to the following files.
@@ -29,7 +28,7 @@ echo "${SLURM_JOB_NODELIST}"
 printf "\n\n"
 
 # Submit
-srun --mpi=pmi2 ./forest-fire
+srun --mpi=pmi2 ./forest-fire-exec
 
 # Output the end time
 printf "\n\n"

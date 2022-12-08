@@ -36,7 +36,6 @@ int main(int argc, char **argv)
   //   int seed = atoi(argv[3]);
   
   int N = 100;
-  double p = 0.6;
   int seed = 1; 
   /////////////////////////////////////////////////////////////////////
    
@@ -46,7 +45,7 @@ int main(int argc, char **argv)
     // call the forest fire function
     //int nsteps = forest_fire(N, p).stepCount;
 
-    std::vector<std::vector<std::vector<double>>> result = forest_fire_average_steps(10, 110, 100);
+    std::vector<std::vector<std::vector<double>>> result = forest_fire_average_steps(10, 110, N);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -54,13 +53,20 @@ int main(int argc, char **argv)
         {
             for (int k = 0; k < result[i][j].size(); k++)
             {
-                std::cout << result[i][j][k] << " ";
+                if (k < 4)
+                {
+                    std::cout << result[i][j][k] << ",";
+                } else
+                {
+                    std::cout << result[i][j][k];
+                }
+                
             }
 
             std::cout << std::endl;
         }
 
-        std::cout << std::endl << std::endl;
+        std::cout << std::endl;
     }
     
     return 0;
@@ -222,8 +228,9 @@ std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowe
         // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
         for (int i = 0; i < 21; ++i)
         {
-            // Adds the probability value to the first column of the row.
+            // Adds the array size and probability value to the first two columns of the row.
             stepsResults.push_back(std::vector<double>());
+            stepsResults[i].push_back(arraySize);
             stepsResults[i].push_back(p);
 
             // Runs the forest fire model 'numberOfRuns' times with a defined array size and p
@@ -234,7 +241,8 @@ std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowe
                 runSteps.push_back(forest_fire(arraySize, p).stepCount);
             }
 
-            // Sums the runSteps vector
+            // Sums the runSteps vector.
+            // Could have used std::reduce which is more efficient but the HPC G++ compiler was out of date.
             int sum = 0;
             for (auto& n : runSteps)
             {
