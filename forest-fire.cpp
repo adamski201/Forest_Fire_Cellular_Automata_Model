@@ -226,7 +226,7 @@ std::vector<std::vector<std::vector<double>>> forest_fire_average_steps(int lowe
             stepsResults.push_back(std::vector<double>());
             stepsResults[i].push_back(p);
 
-            // Runs the forest fire model 'numberOfRuns' times with a defined array size
+            // Runs the forest fire model 'numberOfRuns' times with a defined array size and p
             // and stores the results.
             std::vector<double> runSteps;
             for (int a = 0; a < numberOfRuns; ++a)
