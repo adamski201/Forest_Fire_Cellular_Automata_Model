@@ -1,0 +1,21 @@
+Intel(R) Parallel Studio XE 2020 Update 4 for Linux*
+Copyright 2009-2020 Intel Corporation.
+Running on host compute521.bc4.acrc.priv
+Started on Fri Dec  9 22:54:38 GMT 2022
+Directory is /user/home/ig20411/ForestFireProject/MPI-v1
+Slurm job ID is 11010597
+This jobs runs on the following machines:
+compute[521-524]
+
+
+slurmstepd: error: execve(): /user/home/ig20411/ForestFireProject/MPI-v1/./slurm_bcast_11010597.0_compute521: No such file or directory
+slurmstepd: error: execve(): /user/home/ig20411/ForestFireProject/MPI-v1/./slurm_bcast_11010597.0_compute524: No such file or directory
+slurmstepd: error: execve(): /user/home/ig20411/ForestFireProject/MPI-v1/./slurm_bcast_11010597.0_compute523: No such file or directory
+slurmstepd: error: execve(): /user/home/ig20411/ForestFireProject/MPI-v1/./slurm_bcast_11010597.0_compute522: No such file or directory
+srun: error: compute521: task 0: Exited with exit code 2
+srun: error: compute523: task 2: Exited with exit code 2
+srun: error: compute524: task 3: Exited with exit code 2
+srun: error: compute522: task 1: Exited with exit code 2
+
+
+Ended on: Fri Dec  9 22:54:38 GMT 2022

@@ -9,8 +9,8 @@
 
 ## Direct output to the following files.
 ## (The %j is replaced by the job id.)
-#SBATCH -e MPI_forest_fire_err_%j.txt
 #SBATCH -o MPI_forest_fire_out_%j.txt
+#SBATCH -e MPI_forest_fire_error_%j.txt
 
 # Just in case this is not loaded already...
 module load languages/intel/2020-u4
@@ -28,7 +28,7 @@ echo "${SLURM_JOB_NODELIST}"
 printf "\n\n"
 
 # Submit
-srun --mpi=pmi2 ./forest-fire-exec
+srun --mpi=pmi2 ./forest-fire-mpi1
 
 # Output the end time
 printf "\n\n"
