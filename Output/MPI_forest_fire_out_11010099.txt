@@ -1,0 +1,35 @@
+Intel(R) Parallel Studio XE 2020 Update 4 for Linux*
+Copyright 2009-2020 Intel Corporation.
+Running on host compute242.bc4.acrc.priv
+Started on Fri Dec  9 17:20:32 GMT 2022
+Directory is /user/home/ig20411/ForestFireProject
+Slurm job ID is 11010099
+This jobs runs on the following machines:
+compute242
+
+
+800,0,1,1,1
+800,0.05,3,2,5
+800,0.1,4,3,7
+800,0.15,5,4,9
+800,0.2,7,5,14
+800,0.25,9,6,16
+800,0.3,12,8,21
+800,0.35,16,9,27
+800,0.4,23,16,40
+800,0.45,31,17,67
+800,0.5,58,31,108
+800,0.55,137,66,320
+800,0.6,2064,1237,3030
+800,0.65,1206,1175,1281
+800,0.7,1060,1048,1080
+800,0.75,982,974,1004
+800,0.8,930,925,938
+800,0.85,890,887,895
+800,0.9,857,856,862
+800,0.95,830,828,834
+800,1,801,801,801
+
+
+
+Ended on: Fri Dec  9 17:30:54 GMT 2022

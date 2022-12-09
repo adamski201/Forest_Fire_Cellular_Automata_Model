@@ -6,7 +6,6 @@
 #include <omp.h>
 #include <numeric>
 #include <algorithm>
-#include <mpi.h>
 
 /* 
 - 0: no tree
@@ -24,7 +23,7 @@ struct Results
 
 // define arguments of the forest fire function
 Results forest_fire(int N, double p);
-std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns, int rank, int numProcs);
+std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns);
 
 int main(int argc, char **argv)
 {
@@ -36,7 +35,7 @@ int main(int argc, char **argv)
   //   double p = atof(argv[2]);
   //   int seed = atoi(argv[3]);
   
-  int N = 10;
+  int N = 100;
   int seed = 1; 
   /////////////////////////////////////////////////////////////////////
    
@@ -46,16 +45,26 @@ int main(int argc, char **argv)
     // call the forest fire function
     //int nsteps = forest_fire(N, p).stepCount;
 
-    // Begin MPI call
-    MPI_Init(nullptr, nullptr);
+    std::vector<std::vector<double>> result = forest_fire_average_steps(800, N);
 
-    int numProcs;
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    for (int i = 0; i < 21; i++)
+    {
+        for (int j = 0; j < result[i].size(); j++)
+        {
+            if (j < 4)
+            {
+                std::cout << result[i][j] << ",";
+            } else
+            {
+                std::cout << result[i][j];
+            }
+            
+        }
 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        std::cout << std::endl;
+    }
 
-    std::vector<std::vector<double>> result = forest_fire_average_steps(100, N, rank, numProcs);
+    std::cout << std::endl;
     
     return 0;
 }
@@ -200,93 +209,49 @@ Results forest_fire(int N, double p){
 
 // Function that calculates the average number of steps, incrementing over arraysize and probability
 // Output vector has 21 rows and columns represent [Arraysize, Probability, Average, Min Value, Max Value]
-std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns, int rank, int numProcs)
+std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns)
 {
-    int count = 21 / numProcs;
-    int start = rank * count;
-    int end = start + count;
+    // Create empty vector to store results
+    std::vector<std::vector<double>> stepsResults;
 
     // init probability
-    double p;
+    double p = 0;
 
-    // Create empty vector to store results
-    std::vector<std::vector<double>> stepsResults(21, std::vector<double>(5, 0));
-
-    if (rank == 0) p = 0;
-    if (rank == 1) p = 0.35;
-    if (rank == 2) p = 0.7;
-    
-    if (rank < 3)
+    // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
+    for (int i = 0; i < 21; ++i)
     {
-        // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
-        for (int i = start; i < end; ++i)
+        // Adds the array size and probability value to the first two columns of the row.
+        stepsResults.push_back(std::vector<double>());
+        stepsResults[i].push_back(arraySize);
+        stepsResults[i].push_back(p);
+
+
+        // Runs the forest fire model 'numberOfRuns' times with a defined array size and p
+        // and stores the results.
+        std::vector<double> runSteps;
+        for (int j = 0; j < numberOfRuns; ++j)
         {
-            // Adds the array size and probability value to the first two columns of the row.
-            stepsResults[i][0] = arraySize;
-            stepsResults[i][1] = p;
-
-            // Runs the forest fire model 'numberOfRuns' times with a defined array size and p
-            // and stores the results.
-            std::vector<double> runSteps;
-            for (int j = 0; j < numberOfRuns; ++j)
-            {
-                runSteps.push_back(forest_fire(arraySize, p).stepCount);
-            }
-
-            // Sums the runSteps vector.
-            // Could have used std::reduce which is more efficient but the HPC G++ compiler was out of date.
-            int sum = 0;
-
-            for (auto& n : runSteps)
-            {
-                sum += n;
-            }
-
-            // Calculates and stores the average of the results.
-            double averageSteps = sum / runSteps.size();
-            stepsResults[i][2] = averageSteps;
-            stepsResults[i][3] = *min_element(runSteps.begin(), runSteps.end());
-            stepsResults[i][4] = *max_element(runSteps.begin(), runSteps.end());
-
-            // Increments probability.
-            p += 0.05;
+            runSteps.push_back(forest_fire(arraySize, p).stepCount);
         }
-    }
 
-    
+        // Sums the runSteps vector.
+        // Could have used std::reduce which is more efficient but the HPC G++ compiler was out of date.
+        int sum = 0;
 
-    std::vector<std::vector<double>> finalResults(21, std::vector<double>(5, 0));
-    for (unsigned int i=0;i<21;++i){
-          int ierr = MPI_Allreduce(stepsResults[i].data(), finalResults[i].data(), 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    }
-
-    MPI_Finalize();
-
-    if (rank == 3)
-    {
-        for (int i = 0; i < 21; i++)
+        for (auto& n : runSteps)
         {
-                for (int j = 0; j < finalResults[i].size(); j++)
-                {
-                    if (j < 4)
-                    {
-                        std::cout << finalResults[i][j] << ",";
-                    } else
-                    {
-                        std::cout << finalResults[i][j];
-                    }
-                    
-                }
-
-            std::cout << std::endl;
+            sum += n;
         }
+
+        // Calculates and stores the average of the results.
+        double averageSteps = sum / runSteps.size();
+        stepsResults[i].push_back(averageSteps);
+        stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
+        stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
+
+        // Increments probability.
+        p += 0.05;
     }
 
-    
-
-    return finalResults;
+    return stepsResults;
 }
-
-
-
-
