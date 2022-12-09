@@ -24,7 +24,6 @@ struct Results
 
 // define arguments of the forest fire function
 Results forest_fire(int N, double p);
-std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns);
 
 int main(int argc, char **argv)
 {
@@ -47,35 +46,42 @@ int main(int argc, char **argv)
     int start = rank * 21.0 / n_procs; 
     int end = std::min(((rank + 1) * 21.0 / n_procs), 21.0);
 
-    // Initialise the probability step and results vector.
+    // Initialise the probability step and results vectors.
     // We have 21 probabilities between 0 and 1 (inclusive).
     double prob_step = 0.05;
     std::vector<double> avg_steps_over_p(21,0);
     std::vector<int> min_steps_over_p(21,0);
     std::vector<int> max_steps_over_p(21,0);
+    std::vector<double> prob_reached_end(21,0);
 
     // Loop over probabilities and compute the number of steps before the model burns out,
     // averaged over n_runs.
     for (int i = start; i < end; ++i)
     {
         double prob = i*prob_step;
+
         int n_steps = 0;
         int min_steps = std::numeric_limits<int>::max();
         int max_steps = 0;
+        int n_reached_end = 0;
 
         for (int i_run = 0; i_run < n_runs; ++i_run)
         {
-            int steps = forest_fire(arraySize, prob).stepCount;
-            n_steps += steps;
+            Results result = forest_fire(arraySize, prob);
+            
+            n_steps += result.stepCount;
 
-            if (steps < min_steps) min_steps = steps;
-            if (steps > max_steps) max_steps = steps;
+            if (result.fireReachedEnd) ++n_reached_end;
+            if (result.stepCount < min_steps) min_steps = result.stepCount;
+            if (result.stepCount > max_steps) max_steps = result.stepCount;
         }
 
+        double p_reached_end = n_reached_end / n_runs;
         double avg_steps = n_steps / n_runs;
         avg_steps_over_p[i] = avg_steps;
         min_steps_over_p[i] = min_steps;
         max_steps_over_p[i] = max_steps;
+        prob_reached_end[i] = p_reached_end;
     }
 
     // Worker processes communicate their results to the master process.
@@ -84,6 +90,7 @@ int main(int argc, char **argv)
         MPI_Send(&avg_steps_over_p[start], end-start, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
         MPI_Send(&min_steps_over_p[start], end-start, MPI_INT, 0, rank, MPI_COMM_WORLD);
         MPI_Send(&max_steps_over_p[start], end-start, MPI_INT, 0, rank, MPI_COMM_WORLD);
+        MPI_Send(&prob_reached_end[start], end-start, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
     } else
     {
         for (int i = 1; i < n_procs; ++i)
@@ -93,8 +100,9 @@ int main(int argc, char **argv)
 
             MPI_Status status;
             MPI_Recv(&avg_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
-            MPI_Recv(&min_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
-            MPI_Recv(&max_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
+            MPI_Recv(&min_steps_over_p[i_initial], i_final-i_initial, MPI_INT, i, i, MPI_COMM_WORLD, &status);
+            MPI_Recv(&max_steps_over_p[i_initial], i_final-i_initial, MPI_INT, i, i, MPI_COMM_WORLD, &status);
+            MPI_Recv(&prob_reached_end[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
         }
 
         // Master process outputs the final result.
@@ -104,7 +112,8 @@ int main(int argc, char **argv)
             double prob = i * prob_step;
             std::cout << prob << "," << avg_steps_over_p[i] 
                       << "," << min_steps_over_p[i] << "," 
-                      << max_steps_over_p[i] << std::endl;
+                      << max_steps_over_p[i] << "," 
+                      << prob_reached_end[i] << std::endl;
             
         }
     }
@@ -249,53 +258,4 @@ Results forest_fire(int N, double p){
     Results result = {t, fireReachedEnd, time_elapsed};
 
     return result;
-}
-
-// Function that calculates the average number of steps, incrementing over arraysize and probability
-// Output vector has 21 rows and columns represent [Arraysize, Probability, Average, Min Value, Max Value]
-std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int numberOfRuns)
-{
-    // Create empty vector to store results
-    std::vector<std::vector<double>> stepsResults;
-
-    // init probability
-    double p = 0;
-
-    // Iterates over a range of probability values, from 0 to 1 in 0.05 increments.
-    for (int i = 0; i < 21; ++i)
-    {
-        // Adds the array size and probability value to the first two columns of the row.
-        stepsResults.push_back(std::vector<double>());
-        stepsResults[i].push_back(arraySize);
-        stepsResults[i].push_back(p);
-
-
-        // Runs the forest fire model 'numberOfRuns' times with a defined array size and p
-        // and stores the results.
-        std::vector<double> runSteps;
-        for (int j = 0; j < numberOfRuns; ++j)
-        {
-            runSteps.push_back(forest_fire(arraySize, p).stepCount);
-        }
-
-        // Sums the runSteps vector.
-        // Could have used std::reduce which is more efficient but the HPC G++ compiler was out of date.
-        int sum = 0;
-
-        for (auto& n : runSteps)
-        {
-            sum += n;
-        }
-
-        // Calculates and stores the average of the results.
-        double averageSteps = sum / runSteps.size();
-        stepsResults[i].push_back(averageSteps);
-        stepsResults[i].push_back(*min_element(runSteps.begin(), runSteps.end()));
-        stepsResults[i].push_back(*max_element(runSteps.begin(), runSteps.end()));
-
-        // Increments probability.
-        p += 0.05;
-    }
-
-    return stepsResults;
 }
