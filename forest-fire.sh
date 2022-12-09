@@ -2,9 +2,9 @@
 
 #SBATCH --job-name=forest_fire
 #SBATCH --partition=teach_cpu
-#SBATCH --nodes=1
+#SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=11
+#SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=100M
 
 ## Direct output to the following files.

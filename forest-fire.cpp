@@ -6,6 +6,7 @@
 #include <omp.h>
 #include <numeric>
 #include <algorithm>
+#include <mpi.h>
 
 /* 
 - 0: no tree
@@ -27,45 +28,88 @@ std::vector<std::vector<double>> forest_fire_average_steps(int arraySize, int nu
 
 int main(int argc, char **argv)
 {
-  // read the size of the (square) grid, the probability of filling a grid point with a tree and the random seed
-  
-  // check that we have 3 arguments (in addition to the program name)
-  //   assert (argc == 4); 
-  //   int N = atoi(argv[1]);
-  //   double p = atof(argv[2]);
-  //   int seed = atoi(argv[3]);
-  
-  int N = 100;
+  int n_runs = 100; // Number of runs
   int seed = 1; 
-  /////////////////////////////////////////////////////////////////////
+  int arraySize = 100;
+    /////////////////////////////////////////////////////////////////////
    
   // initialise the random number generator using a fixed seed for reproducibility
     srand(seed); 
 
-    // call the forest fire function
-    //int nsteps = forest_fire(N, p).stepCount;
 
-    std::vector<std::vector<double>> result = forest_fire_average_steps(800, N);
+    MPI_Init(nullptr, nullptr);
 
-    for (int i = 0; i < 21; i++)
+    int rank, n_procs;
+    MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Determines which probabilities are handled by each process
+    int start = rank * 21.0 / n_procs; 
+    int end = std::min(((rank + 1) * 21.0 / n_procs), 21.0);
+
+    // Initialise the probability step and results vector.
+    // We have 21 probabilities between 0 and 1 (inclusive).
+    double prob_step = 0.05;
+    std::vector<double> avg_steps_over_p(21,0);
+    std::vector<int> min_steps_over_p(21,0);
+    std::vector<int> max_steps_over_p(21,0);
+
+    // Loop over probabilities and compute the number of steps before the model burns out,
+    // averaged over n_runs.
+    for (int i = start; i < end; ++i)
     {
-        for (int j = 0; j < result[i].size(); j++)
+        double prob = i*prob_step;
+        int n_steps = 0;
+        int min_steps = std::numeric_limits<int>::max();
+        int max_steps = 0;
+
+        for (int i_run = 0; i_run < n_runs; ++i_run)
         {
-            if (j < 4)
-            {
-                std::cout << result[i][j] << ",";
-            } else
-            {
-                std::cout << result[i][j];
-            }
-            
+            int steps = forest_fire(arraySize, prob).stepCount;
+            n_steps += steps;
+
+            if (steps < min_steps) min_steps = steps;
+            if (steps > max_steps) max_steps = steps;
         }
 
-        std::cout << std::endl;
+        double avg_steps = n_steps / n_runs;
+        avg_steps_over_p[i] = avg_steps;
+        min_steps_over_p[i] = min_steps;
+        max_steps_over_p[i] = max_steps;
     }
 
-    std::cout << std::endl;
-    
+    // Worker processes communicate their results to the master process.
+    if (rank > 0)
+    {
+        MPI_Send(&avg_steps_over_p[start], end-start, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
+        MPI_Send(&min_steps_over_p[start], end-start, MPI_INT, 0, rank, MPI_COMM_WORLD);
+        MPI_Send(&max_steps_over_p[start], end-start, MPI_INT, 0, rank, MPI_COMM_WORLD);
+    } else
+    {
+        for (int i = 1; i < n_procs; ++i)
+        {
+            int i_initial = 1.0*i / n_procs * 21.0;
+            int i_final = std::min((1.0*(i+1)/ n_procs * 21.0),21.0);
+
+            MPI_Status status;
+            MPI_Recv(&avg_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
+            MPI_Recv(&min_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
+            MPI_Recv(&max_steps_over_p[i_initial], i_final-i_initial, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
+        }
+
+        // Master process outputs the final result.
+        std::cout << "Probability, Avg. Steps, Min. Steps, Max Steps" << std::endl;
+        for (int i = 0; i < 21; ++i)
+        {
+            double prob = i * prob_step;
+            std::cout << prob << "," << avg_steps_over_p[i] 
+                      << "," << min_steps_over_p[i] << "," 
+                      << max_steps_over_p[i] << std::endl;
+            
+        }
+    }
+
+    MPI_Finalize();
     return 0;
 }
   
